@@ -27,7 +27,6 @@ library(stringr)
 ```{r}
 #This is to read the data that we were supposed to use.
 strawberry <- read_csv("strawberries25_v3.csv", col_names = TRUE)
-glimpse(strawberry)
 ```
 
 ```{r}
