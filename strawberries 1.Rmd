@@ -18,6 +18,8 @@ library(stringr)
 #A lot of the code in this homework was used from USDA-NASS data cleaning-ver2.qmd that was given to us. 
 
 #The reason for this is because I thought that the qmd contained information of the solutions of this homework. Therefore, I decided to use this homework assignment as practice to get used to the new types of code that were shown. Thus, I decided to try and replicate and understand the qmd. My code is what I thought could make the code better/what my approach would have been and, in addition, I commented on all the codes of what I was happening in the code.
+
+#THEN. After I finished reviewing the qmd and learning the contents within it. I worked on splitting the DOMAIN CATEGORY column into three different new columns called "Chemical", "Pesticide", and "Number" which was what the main point of the homework was (and that is at the bottom).
 ```
 
 ```{r}
@@ -67,6 +69,7 @@ strawberry$Metric <- str_trim(strawberry$Metric, side = "both")
 
 sales <- strawberry |> filter(Program == "CENSUS")
 chem <- strawberry |> filter(Program == "SURVEY")
+nrow(strawberry) == (nrow(chem) + nrow(sales))
 ```
 
 ```{r}
@@ -102,4 +105,22 @@ ggplot(straw2, aes(reorder(State, -Value), Value)) +
   theme(axis.text.x = element_text(angle = 45,hjust = 1)) +
   labs(x = "States", y = "Sales",
 title ="Organic Strawberry Sales in 2019")
+```
+
+```{r}
+strawberry <- read_csv("strawberries25_v3.csv", col_names = TRUE, show_col_types = FALSE)
+
+#I modified the DOMAIN CATEGORY into three different categories.
+strawberry <- strawberry %>%
+  mutate(`Domain Category` = ifelse(is.na(`Domain Category`), "", `Domain Category`)) %>%
+  mutate(
+    Chemical = gsub(", .*", "", `Domain Category`), 
+#Get the first part before the comma
+    Pesticide = gsub(".*, (.*):.*", "\\1", `Domain Category`),
+#Get the second part before the colon
+    Number = gsub(".*= (\\d+).*", "\\1", `Domain Category`)
+#Get the number after '='
+  )
+
+print(strawberry)
 ```
