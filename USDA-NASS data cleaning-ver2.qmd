@@ -38,7 +38,7 @@ Acquire, explore, clean & structure, EDA
 
 The data set for this assignment has been selected from:
 
-[[USDA_NASS_strawb_2024SEP25](https://quickstats.nass.usda.gov) The data have been stored on NASS here: [USDA_NASS_strawb_2024SEP25](https://quickstats.nass.usda.gov/results/28141CE5-7429-36C3-A385-33ACC8030763)
+\[[USDA_NASS_strawb_2024SEP25](https://quickstats.nass.usda.gov) The data have been stored on NASS here: [USDA_NASS_strawb_2024SEP25](https://quickstats.nass.usda.gov/results/28141CE5-7429-36C3-A385-33ACC8030763)
 
 and has been stored on the blackboard as strawberries25_v3.csv.
 
@@ -71,7 +71,7 @@ glimpse(strawberry)
 
 I have 12699 rows and 21 columns.
 
-All I can see from the glimpse is I have date, location, values and coefficients of variation.
+All I can see from the glimpse is I have date,\`\`\`\` location, values and coefficients of variation.
 
 Examine the data. How is it organized?
 
