@@ -19,7 +19,9 @@ library(stringr)
 
 #The reason for this is because I thought that the qmd contained information of the solutions of this homework. Therefore, I decided to use this homework assignment as practice to get used to the new types of code that were shown. Thus, I decided to try and replicate and understand the qmd. My code is what I thought could make the code better/what my approach would have been and, in addition, I commented on all the codes of what I was happening in the code.
 
-#THEN. After I finished reviewing the qmd and learning the contents within it. I worked on splitting the DOMAIN CATEGORY column into three different new columns called "Chemical", "Pesticide", and "Number" which was what the main point of the homework was (and that is at the bottom).
+#THEN. After I finished reviewing the qmd and learning the contents within it. I worked on splitting the DOMAIN CATEGORY column into three different new columns called "Chemical", "Pesticide", and "Number" which was what the main point of the homework was (and that is at the bottom). 
+
+#The strawberries25_v3.csv file in my Github is the new and improved dataset.
 ```
 
 ```{r}
@@ -123,4 +125,5 @@ strawberry <- strawberry %>%
   )
 
 print(strawberry)
+write_csv(strawberry, "strawberries25_v3.csv")
 ```
