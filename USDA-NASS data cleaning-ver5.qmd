@@ -1,0 +1,463 @@
+---
+title: "Stawberries 3"
+author: MA615
+date: 2024 Sept 30
+format:
+  html:
+    embed-resources: true
+editor: visual
+---
+
+# Version 5
+
+We ditch the counties
+
+# Preparing data for analysis
+
+Acquire, explore, clean & structure, EDA
+
+### Data cleaning and organization
+
+["An introduction to data cleaning with R" by Edwin de Jonge and Mark van der Loo](https://cran.r-project.org/doc/contrib/de_Jonge+van_der_Loo-Introduction_to_data_cleaning_with_R.pdf)
+
+["Problems, Methods, and Challenges in Comprehensive Data Cleansing" by Heiko Müller and Johann-Christoph Freytag](https://www.researchgate.net/profile/Heiko-Mueller/publication/228929938_Problems_methods_and_challenges_in_comprehensive_data_cleansing/links/09e415101b58541e2c000000/Problems-methods-and-challenges-in-comprehensive-data-cleansing.pdf)
+
+## Strawberries
+
+**Questions**
+
+-   Where they are grown? By whom?
+
+-   Are they really loaded with carcinogenic poisons?
+
+-   Are they really good for your health? Bad for your health?
+
+-   Are organic strawberries carriers of deadly diseases?
+
+-   When I go to the market should I buy conventional or organic strawberries?
+
+-   Do Strawberry farmers make money?
+
+-   How do the strawberries I buy get to my market?
+
+## The data
+
+The data set for this assignment has been selected from:
+
+\[[USDA_NASS_strawb_2024SEP25](https://quickstats.nass.usda.gov) The data have been stored on NASS here: [USDA_NASS_strawb_2024SEP25](https://quickstats.nass.usda.gov/results/28141CE5-7429-36C3-A385-33ACC8030763)
+
+and has been stored on the blackboard as strawberries25_v3.csv.
+
+## read and explore the data
+
+Set-up
+
+```{r}
+#| label: load libraries and set options
+#| warning: false
+#| message: false
+#| echo: false
+
+library(knitr)  
+library(kableExtra)
+library(tidyverse)
+
+
+```
+
+Read the data and take a first look
+
+```{r}
+#| label: read data - glimpse 
+
+strawberry <- read_csv("strawberries25_v3.csv", col_names = TRUE, show_col_types = FALSE )
+
+## glimpse(strawberry)
+```
+
+Ditch the counties
+
+```{r}
+#| label: ditch the counties
+
+unique(strawberry$`Geo Level`)
+
+strawberry <- strawberry |> 
+  filter(`Geo Level`== "NATIONAL" | `Geo Level`== "STATE")
+  
+
+```
+
+I have 5359 rows and 21 columns.
+
+## remove columns with a single value in all rows
+
+```{r}
+#|label: function def - drop 1-item columns
+
+drop_one_value_col <- function(df){ 
+  df_id <- ensym(df)
+  msg = paste("Looking for single value columns in data frame: ",as.character(df_id) )
+  print(msg)
+  ## takes whole dataframe
+drop <- NULL
+val <- NULL
+## test each column for a single value
+for(i in 1:dim(df)[2]){   
+  if(distinct(df[,i]) |> count() == 1){
+    drop <- c(drop, i)
+    val <- c(val, df[1,i])
+  }
+} 
+
+if(is.null(drop)){
+  print("No columns dropped")
+  return(df)}else{
+   print("Columns dropped:")
+   # print(colnames(df)[drop])
+   print(unlist(val))
+   df <- df[, -1*drop]
+   return(df)
+   }
+}
+
+
+## use the function
+
+strawberry <- strawberry |> drop_one_value_col()
+
+
+```
+
+Split the census data from the survey data. drop single value columns
+
+## Census data first
+
+```{r}
+#| label: srawberries split census, survey
+
+
+straw_cen <- strawberry |> filter(Program=="CENSUS")
+
+straw_sur <- strawberry |> filter(Program=="SURVEY")
+
+straw_cen <- straw_cen |> drop_one_value_col()
+
+straw_sur <- straw_sur |> drop_one_value_col()
+
+
+```
+
+```{r}
+#| label: straw_cen split cols
+
+straw_cen <- straw_cen |>
+  separate_wider_delim(  cols = `Data Item`,
+                         delim = " - ",
+                         names = c("strawberries",
+                                 "Category"),
+                         too_many = "error",
+                         too_few = "align_start"
+                       )
+
+```
+
+```{r}
+#| label: isolate organic
+
+# 
+# unique(straw_cen$strawberries)
+# straw_cen$strawberries |> str_which("STRAWBERRIES") |> length()
+# straw_cen$strawberries |> str_which("STRAWBERRIES, ORGANIC") |> length()
+# straw_cen$strawberries |> str_which("STRAWBERRIES, ORGANIC, FRESH MARKET") |> length()
+# straw_cen$strawberries |> str_which("STRAWBERRIES, ORGANIC, PROCESSING" ) |> length()
+# 
+# ## count the cases
+# straw_cen$strawberries |> str_which("ORGANIC") |> length()
+# straw_cen$strawberries |> str_which("FRESH MARKET") |> length()
+# straw_cen$strawberries |> str_which("PROCESSING") |> length()
+
+straw_cen <- straw_cen |>
+  separate_wider_delim(  cols = strawberries,
+                         delim = ", ",
+                         names = c("strawberries",
+                                 "ORGANIC",
+                                 "organic_detail"),
+                         
+                         too_many = "error",
+                         too_few = "align_start"
+                       )
+
+
+straw_cen <- straw_cen |> drop_one_value_col()
+
+## how many organic rows?
+
+organic_cen <- straw_cen |> filter(ORGANIC == "ORGANIC")
+
+sum(is.na(straw_cen$ORGANIC))
+
+straw_cen <- straw_cen[(is.na(straw_cen$ORGANIC)),]
+
+
+straw_cen <- straw_cen |> drop_one_value_col()
+
+
+
+```
+
+Note that straw_cen has only one year: 2022
+
+Current stats Census date has been isolated and split between Organic and Conventional strawberries
+
+############################################ 
+
+```{r}
+#| label: explore straw_cen$Category
+
+straw_cen <- straw_cen |>
+  separate_wider_delim(  cols = `Category`,
+                         delim = " ",
+                         names = c("COL1",
+                                 "COL2"),
+                         too_many = "merge",
+                         too_few = "align_start"
+                       )
+
+
+straw_cen$COL2 <- str_replace(straw_cen$COL2,"WITH ","")
+
+straw_cen <- straw_cen |> rename(Measure = COL1, Bearing_type= COL2)
+
+```
+
+```{r}
+#| label: explore straw_cen$Domain & Domain Category
+
+
+## remove AREA GROWN and parens 
+## change NOT SPECIFIEC TO TOTAL
+
+straw_cen <- straw_cen |> rename(size_bracket = `Domain Category`)
+
+straw_cen$size_bracket <- str_replace(straw_cen$size_bracket, "NOT SPECIFIED", "TOTAL")
+
+straw_cen$size_bracket <- str_replace(straw_cen$size_bracket, "AREA GROWN: ", "")
+
+```
+
+```{r}
+#| label: explore organic_cen
+
+organic_cen <- organic_cen |> drop_one_value_col()
+
+
+
+```
+
+Now examine the Survey data
+
+```{r}
+#| label: Survey data
+
+## Data Item
+
+## unique(straw_sur$`Data Item`)
+
+straw_sur1 <- straw_sur |>  separate_wider_delim(cols = `Data Item`,
+                                                delim = ", ",
+                                                names = c("straw",
+                                                         "mkt",
+                                                         "measure",
+                                                         "other"
+                                                         ),
+                                                too_many = "merge",
+                                                too_few = "align_start")
+                                                
+                                                  
+straw_sur2 <- straw_sur1 |> separate_wider_delim(cols = "straw", 
+                                                 delim = " - ",
+                                                 names = c("straw",
+                                                           "more"),
+                                                 too_many = "merge",
+                                                 too_few = "align_start"
+                                                 )
+  
+
+rm(straw_sur, straw_sur1)
+
+```
+
+Shift data into alignment
+
+```{r}
+#| label: Shift data on a row
+
+## function shift_loc
+## Moves adjacent data cells in a data.frame on a single row
+## Use this function to fix alignment problems after separating 
+## columns containing multiple columns of data. 
+
+## Of course the working assumption is that there is room in the 
+## data frame for the data you're shifting.
+##
+## The data cells that are empty after the data shift are NA.
+## 
+## Input paramaters
+## 
+## df -- data frame
+## col_name -- name of colume where the left-most data item is located
+## dat_name -- name of data item in the column
+## num_col -- the number of columns is the same as the number of
+##            adjacent data to be moved.
+## num_shift -- the number of rows to move the data 
+##
+
+
+shift_loc <- function(df, col_name, dat_name, num_col, num_shift){
+ # browser()
+  col_num = which(colnames(df) == col_name)
+  row_num = which(df[,col_num] == dat_name)  ## calcs a vector of rows
+  
+  for(k in 1:length(row_num)){
+  d = rep(0,num_col) ## storage for items to be moved
+  for(i in 1:num_col){
+    d[i] = df[row_num[k], col_num + i - 1]
+  }
+  for(i in 1:num_col){
+    ra = row_num[k]
+    cb = col_num + i - 1
+    df[ra, cb] <-  NA
+  }
+  for(j in 1:num_col){
+    rc = row_num[k]
+    cd = col_num + j - 1 + num_shift
+    df[rc, cd] = d[j]
+  }
+  }
+ # sprintf("Rows adjusted:")
+  # print("%d",row_num)
+  return(df)
+}
+
+
+
+
+straw_sur2 <- straw_sur2 |> shift_loc("more", "PRICE RECEIVED", 2, 1 )
+
+
+straw_sur2 <- straw_sur2 |> shift_loc("more", "ACRES HARVESTED", 1, 1 )
+
+straw_sur2 <- straw_sur2 |> shift_loc("more", "ACRES PLANTED", 1, 1 )
+
+straw_sur2 <- straw_sur2 |> shift_loc("more", "PRODUCTION", 2, 1 )
+
+straw_sur2 <- straw_sur2 |> shift_loc("more", "YIELD", 2, 1 )
+
+straw_sur2 <- straw_sur2 |> shift_loc("more", "APPLICATIONS", 3, 1 )
+
+straw_sur2 <- straw_sur2 |> shift_loc("more", "TREATED", 3, 1 )
+
+straw_sur2 <- straw_sur2 |> drop_one_value_col()
+
+
+```
+
+Examine Domain
+
+```{r}
+#| label: use domain to make chem, fert, total data frames
+
+
+
+unique(straw_sur2$Domain)
+
+straw_sur2 <- straw_sur2 |>  separate_wider_delim(cols = Domain,
+                                                delim = ", ",
+                                                names = c("col1",
+                                                         "col2"),
+                                                too_many = "merge",
+                                                too_few = "align_start")
+
+
+unique(straw_sur2$col1)
+
+
+survey_d_total <- straw_sur2 |>  filter(col1 == "TOTAL")
+
+survey_d_chem <- straw_sur2 |>  filter(col1 == "CHEMICAL")
+
+survey_d_fert <- straw_sur2 |>  filter(col1 == "FERTILIZER")
+
+
+```
+
+now look at totals
+
+```{r}
+
+
+survey_d_total <- survey_d_total |> drop_one_value_col()
+
+### align terms
+
+
+
+survey_d_total <- survey_d_total |> shift_loc("measure", "MEASURED IN $ / CWT", 1, 1 )
+
+
+survey_d_total <- survey_d_total |> shift_loc("measure", "MEASURED IN $", 1, 1 )
+
+
+survey_d_total <- survey_d_total |> shift_loc("measure", "MEASURED IN CWT", 1, 1 )
+
+survey_d_total <- survey_d_total |> shift_loc("measure", "MEASURED IN TONS", 1, 1 )
+
+
+survey_d_total <- survey_d_total |> shift_loc("measure", "MEASURED IN CWT / ACRE", 1, 1 )
+
+survey_d_total <- survey_d_total |> shift_loc("measure", "MEASURED IN TONS / ACRE", 1, 1 )
+
+
+#### split the mkt column
+
+
+survey_d_total <- survey_d_total |>  
+  separate_wider_delim(cols = mkt,
+                      delim = " - ",
+                      names = c("col3",
+                                "col4"),
+                   too_many = "merge",
+                    too_few = "align_start")
+
+
+
+
+
+
+```
+
+there are two markets for Strawberries -- Fresh Marketing and Processing
+
+make a table for each
+
+from the Survey Totals
+
+we have reports for
+
+Markets: Fresh and Processing Operations: Growing and Production
+
+```{r}
+
+survey_d_total <- survey_d_total |> 
+  group_by(Year) |> 
+  group_by(Period) |>
+  group_by(`Geo Level`) |>
+  group_by(State) |> 
+  group_by(col3)
+
+
+
+
+
+```

@@ -114,7 +114,7 @@ title ="Organic Strawberry Sales in 2019")
 strawberry <- read_csv("strawberries25_v3.csv", col_names = TRUE, show_col_types = FALSE)
 
 #I modified the DOMAIN CATEGORY into three different categories.
-strawberry <- strawberry %>%
+cleanedStrawberry <- strawberry %>%
   mutate(`Domain Category` = ifelse(is.na(`Domain Category`), "", `Domain Category`)) %>%
   mutate(
     Chemical = gsub(", .*", "", `Domain Category`), 
@@ -125,6 +125,6 @@ strawberry <- strawberry %>%
 #Get the number after '='
   )
 
-print(strawberry)
-write_csv(strawberry, "strawberries25_v3.csv")
+print(cleanedStrawberry)
+write_csv(cleanedStrawberry, "strawberries25_v3.csv")
 ```

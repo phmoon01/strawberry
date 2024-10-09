@@ -71,7 +71,7 @@ glimpse(strawberry)
 
 I have 12699 rows and 21 columns.
 
-All I can see from the glimpse is I have date,\`\`\`\` location, values and coefficients of variation.
+All I can see from the glimpse is I have date, location, values and coefficients of variation.
 
 Examine the data. How is it organized?
 
