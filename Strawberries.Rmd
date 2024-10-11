@@ -20,22 +20,19 @@ options(echo = FALSE, digits = 3, scipen = 999)
 strawberry <- read_csv("strawberries25_v3.csv", col_names = TRUE)
 ```
 
+We determine whether or not every line is associated with a state and if it is, we return to the reader stating that it does.
 ```{r}
 #| label: explore organization 1 
 
 ## Is every line associated with a state?
-
 state_all <- strawberry |> distinct(State)
-
 state_all1 <- strawberry |> group_by(State) |> count()
 
 ## every row is associated with a state
-
 if(sum(state_all1$n) == dim(strawberry)[1]){print("Yes every row in the data is associated with a state.")}
-
-## rm(state_all, state_all1)
 ```
 
+We define a function called drop_one_value_col and check to see if there is one unique value. This is because we want to get rid of the character values which is "NA" so that we can continue with just values in our data frame.
 ```{r}
 #|label: function def - drop 1-item columns
 
@@ -53,11 +50,11 @@ drop_one_value_col <- function(df){
   
   # If no columns were found to drop, return "none"
   if(is.null(drop)){
-    return("none")  # Return "none" if no columns are to be dropped
+    return("none")
   }
   else{
-    print("Columns dropped:")  # Print a message indicating columns will be dropped
-    print(colnames(df)[drop])  # Print the names of the columns that are being dropped
+    print("Columns dropped:")
+    print(colnames(df)[drop])
     strawberry <- df[, -1 * drop]  # Remove the identified columns from the dataframe
   }
 }
@@ -69,6 +66,7 @@ strawberry <- drop_one_value_col(strawberry)
 drop_one_value_col(strawberry)
 ```
 
+We clean the dataset by filtering out any rows that are not related to the national or state level. This is to make the data more precise for future analysis.
 ```{r}
 #| label: ditch the counties
 
@@ -79,25 +77,19 @@ unique(strawberry$`Geo Level`)
 strawberry <- strawberry |> filter(`Geo Level` == "NATIONAL" | `Geo Level` == "STATE")
 ```
 
+We split the original Strawberries data into census and survey data frames to work with.
 ```{r}
-#| label: srawberries split census, survey
+#| label: strawberries split census, survey
 
-# Filter the 'strawberry' dataframe to create a new dataframe 'straw_cen' containing only rows where Program is "CENSUS"
 straw_cen <- strawberry |> filter(Program == "CENSUS")
-
-# Apply the 'drop_one_value_col' function to the 'straw_cen' dataframe to remove columns with only one unique value
 straw_cen <- straw_cen |> drop_one_value_col()
-
-# Filter the 'strawberry' dataframe to create a new dataframe 'straw_sur' containing only rows where Program is "SURVEY"
 straw_sur <- strawberry |> filter(Program == "SURVEY")
-
-# Apply the 'drop_one_value_col' function to the 'straw_sur' dataframe to remove columns with only one unique value
 straw_sur <- straw_sur %>% drop_one_value_col()
 
-# Check if the total number of rows in the original dataframe equals the sum of the rows in 'straw_sur' and 'straw_cen'
 nrow(strawberry) == (nrow(straw_sur) + nrow(straw_cen))
 ```
 
+In our straw_sur we have the Domain Category that needs cleaning. The reason for this is that there is a lot of info in one column that will be hard to pinpoint when we need specific data. Therefore, we are splitting into separate categories: Chemical and Number so that we can easily call what we want.
 ```{r, warning = FALSE}
 # Modify the 'straw_sur' dataframe using a series of transformations
 straw_sur <- straw_sur %>%
@@ -107,47 +99,38 @@ straw_sur <- straw_sur %>%
   # Separate the 'Domain Category' into two new columns: 'Chemical' and 'Number'
   separate(`Domain Category`, into = c("Chemical", "Number"), sep = ",") %>%
   
-  # Trim whitespace from the 'Chemical' column and convert 'Number' to numeric after trimming
-  mutate(Chemical = trimws(Chemical),     # Remove leading/trailing whitespace from Chemical
-         Number = as.numeric(trimws(Number)))  # Convert Number to numeric after trimming
+  mutate(Chemical = trimws(Chemical),
+         Number = as.numeric(trimws(Number)))
 ```
 
+We separate the Domain into Domain and use.
 ```{r, warning = FALSE}
 # Modify the 'straw_sur' dataframe to separate the 'Domain' column into two new columns: 'Domain' and 'use'
 straw_sur <- straw_sur %>%
   separate(Domain, into = c("Domain", "use"), sep = ",", extra = "merge")
 ```
 
+We clean our straw_sur data frame into more specific detail.
 ```{r}
 # Modify the 'straw_sur' dataframe using a series of transformations
 straw_sur <- straw_sur %>%
-  # Extract the measurement information from the 'Data Item' column using a regex pattern
   mutate(measurement = str_extract(`Data Item`, "(?<=MEASURED\\s).*")) %>%
-  
-  # Remove the 'MEASURED' text and everything after it from the 'Data Item' column
   mutate(`Data Item` = str_remove(`Data Item`, "MEASURED.*")) %>%
-  
-  # Separate the 'Data Item' into two new columns: 'Data Item' and 'category'
   separate(`Data Item`, into = c("Data Item", "category"), sep = "[,-]", extra = "merge", fill = "right")
 
 # Select specific columns from the 'straw_sur' dataframe
 straw_sur <- straw_sur %>%
   select(1:7, 13, 8:12)
 
-# Further modify the 'measurement' column
 straw_sur <- straw_sur %>%
   # Remove the word 'IN' from the 'measurement' column
   mutate(measurement = gsub("\\bIN\\b", "", measurement)) %>%
-  
-  # Trim whitespace from the 'measurement' column
   mutate(measurement = trimws(measurement))
 
 # Select specific columns from the 'straw_sur' dataframe again
 straw_sur <- straw_sur %>%
   select(1:8, 13, 9:12)
-```
 
-```{r}
 # Remove the 'Data Item' column from the 'straw_sur' dataframe
 straw_sur <- straw_sur %>%
   select(-`Data Item`)
@@ -156,20 +139,17 @@ straw_sur <- straw_sur %>%
 straw_sur$category <- gsub(",", "", straw_sur$category)
 ```
 
+We split the straw_sur data frame into two more specific data frames called sur_total and sur_chem.
 ```{r}
-# Filter the 'straw_sur' dataframe to create a new dataframe 'sur_total' containing only rows where Domain is "TOTAL"
+#| label: splits into two data frames for "TOTAL" and "CHEMICAL"
+
 sur_total <- straw_sur %>% filter(Domain == "TOTAL")
-
-# Filter the 'straw_sur' dataframe to create a new dataframe 'sur_chem' containing only rows where Domain is "CHEMICAL"
 sur_chem <- straw_sur %>% filter(Domain == "CHEMICAL")
-
-# Apply the 'drop_one_value_col' function to the 'sur_total' dataframe to remove columns with only one unique value
 sur_total = drop_one_value_col(sur_total)
-
-# Apply the 'drop_one_value_col' function to the 'sur_chem' dataframe to remove columns with only one unique value
 sur_chem = drop_one_value_col(sur_chem)
 ```
 
+We clean the straw_cen data frame by creating two new columns: "strawberries" and "category"
 ```{r}
 #| label: straw_cen split cols
 
@@ -180,9 +160,9 @@ straw_cen <- straw_cen |>
                        too_many = "error", too_few = "align_start")
 ```
 
+We modify the straw_cen dataframe by separating the "strawberries" column into three new columns: "strawberries", "ORGANIC", and "organic_detail".
 ```{r}
 #| label: isolate organic
-
 
 # Modify the 'straw_cen' dataframe by separating the 'strawberries' column into three new columns: 'strawberries', 'ORGANIC', and 'organic_detail'
 straw_cen <- straw_cen |>
@@ -190,22 +170,16 @@ straw_cen <- straw_cen |>
                        names = c("strawberries", "ORGANIC", "organic_detail"), 
                        too_many = "error", too_few = "align_start")
 
-# Apply the 'drop_one_value_col' function to the 'straw_cen' dataframe to remove columns with only one unique value
 straw_cen <- straw_cen |> drop_one_value_col()
-
-# Filter the 'straw_cen' dataframe to create a new dataframe 'organic_cen' containing only rows where ORGANIC is "ORGANIC"
 organic_cen <- straw_cen |> filter(ORGANIC == "ORGANIC")
 
-# Calculate the number of NA values in the 'ORGANIC' column of the 'straw_cen' dataframe
 sum(is.na(straw_cen$ORGANIC))
 
-# Keep only rows in 'straw_cen' where the 'ORGANIC' column is NA
 straw_cen <- straw_cen[(is.na(straw_cen$ORGANIC)), ]
-
-# Apply the 'drop_one_value_col' function again to the updated 'straw_cen' dataframe
 straw_cen <- straw_cen |> drop_one_value_col()
 ```
 
+We modify the straw_cen dataframe by separating the "Category" column into two new columns: "COL1" and "COL2"
 ```{r}
 #| label: explore straw_cen$Category
 
@@ -222,57 +196,51 @@ straw_cen$COL2 <- str_replace(straw_cen$COL2, "WITH ", "")
 straw_cen <- straw_cen |> rename(Measure = COL1, Bearing_type = COL2)
 ```
 
+We clean the straw_cen data frame and standardize the data.
 ```{r}
 #| label: explore straw_cen$Domain & Domain Category
 
-# Rename the 'Domain Category' column to 'size_bracket' in the 'straw_cen' dataframe
 straw_cen <- straw_cen |> rename(size_bracket = `Domain Category`)
-
-# Replace occurrences of "NOT SPECIFIED" in the 'size_bracket' column with "TOTAL"
 straw_cen$size_bracket <- str_replace(straw_cen$size_bracket, "NOT SPECIFIED", "TOTAL")
-
-# Remove the text "AREA GROWN: " from the 'size_bracket' column
 straw_cen$size_bracket <- str_replace(straw_cen$size_bracket, "AREA GROWN: ", "")
 ```
 
+We separate the Category column into two new columns: "Category" and "measurement"
 ```{r}
-# Apply the 'drop_one_value_col' function to the 'organic_cen' dataframe to remove columns with only one unique value
-organic_cen <- organic_cen |> drop_one_value_col()
+#| label: separate the Category column into two new columns: "Category" and "measurement"
 
-# Separate the 'Category' column into two new columns: 'Category' and 'measurement' using the delimiter " MEASURED "
+organic_cen <- organic_cen |> drop_one_value_col()
 organic_cen <- organic_cen %>%
   separate(Category, into = c("Category", "measurement"), sep = " MEASURED ", extra = "merge", fill = "right")
-
-# Remove any commas from the 'Category' column in the 'organic_cen' dataframe
 organic_cen$Category <- gsub(",", "", organic_cen$Category)
-
-# Remove the word "IN" from the 'measurement' column, ignoring case
 organic_cen$measurement <- gsub("IN", "", organic_cen$measurement, ignore.case = TRUE)
 ```
 
+We create a new dataframe "no_NA" by modifying "straw_cen"
 ```{r}
-# Create a new dataframe 'no_NA' by modifying 'straw_cen':
+#| label: create a new dataframe "no_NA" by modifying "straw_cen"
+
 no_NA <- straw_cen |> 
-  # Replace "(D)" and "(Z)" in the 'Value' column with NA
   mutate(Value = na_if(Value, "(D)"), 
          Value = na_if(Value, "(Z)"),
-         # Remove commas from 'Value' and convert it to numeric
          Value = as.numeric(gsub(",", "", Value))) |> 
-  # Remove rows with NA values from the dataframe
   na.omit()
 
 # Fit a linear model 'fit1' predicting 'Value' based on 'Measure', 'Bearing_type', 'State', and 'size_bracket'
 fit1 <- lm(Value ~ Measure + Bearing_type + State + size_bracket, data = no_NA)
 ```
 
+From here on out, we will be only dealing with the outputs. All the cleaning that we want is not complete and now it is time to show what we can do with the new cleaned data frames what we have from our original "Strawberries" data frame.
 ```{r}
 #|label: listing out the data frames
 
 print(head(strawberry))
+print(head(straw_sur))
 print(head(straw_cen))
 print(head(sur_chem))
 print(head(sur_total))
 print(head(organic_cen))
+print(head(no_NA))
 ```
 
 ```{r}
@@ -284,7 +252,7 @@ state_counts <- organic_cen %>%
   summarize(Count = n())
 
 ggplot(state_counts, aes(x = reorder(State, Count), y = Count)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_bar(stat = "identity", fill = "blue") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(x = "States", y = "Count of Organic Strawberry Operations",
        title = "Count of Organic Strawberry Operations by State")
