@@ -243,6 +243,14 @@ print(head(organic_cen))
 print(head(no_NA))
 ```
 
+We create new csv files for all of the new data sets that we created during this project.
+```{r}
+write.csv(organic_cen, "organic_cen.csv", row.names = FALSE)
+write.csv(straw_cen, "straw_cen.csv", row.names = FALSE)
+write.csv(sur_chem, "sur_chem.csv", row.names = FALSE)
+write.csv(sur_total, "sur_total.csv", row.names = FALSE)
+```
+
 ```{r}
 #|label: Count of Organic Strawberry Operations by State Plot 
 
