@@ -10,7 +10,7 @@ In our first assignment, we looked at different chemicals used on strawberries. 
 
 I have decided to use the USDA Pesticide Data Program sample data to test whether or not we should stop eating strawberries or if it was safe to continue snacking on our favorite fruit. And if it was safe to eat, how much can we eat before it becomes too dangerous. I got this idea from the radiation banana theory, how every banana contains some radiation. However it is so minuscule that you would have to eat 10 million bananas to die from radiation poisoning which is obviously not an issue as there are numerous more ways I can think of that you will die from trying to eat 10 million bananas.
 
-```{r}
+```{r, include = FALSE}
 #Loading libraries
 library(dplyr)
 library(knitr)
@@ -60,7 +60,7 @@ Now we will start my analyzing Captan.
 ```{r}
 captan <- usdaNew |>
   filter(Pesticide.Name == "Captan")
-captan
+#captan
 ```
 
 Now that we got all of Captan isolated, we will look at specific values: the Maximum and the Mean.
@@ -75,15 +75,15 @@ cat("\nThe average value of Captan concentration in strawberries is:", b)
 
 There seemed to be 2 outliers (5.6 and 3.2) that were over 5 times greater than any other value, so I found the outliers and also tried doing this again after taking out the outliers to see our results.
 
-```{r, include = FALSE}
+```{r}
 rowFinder1 <- captan[captan$Concentration == 5.600,]
-rowFinder1
+#rowFinder1
 rowFinder2 <- captan[captan$Concentration == 3.200,]
-rowFinder2
+#rowFinder2
 
 captanNew <- captan[captan$Concentration != 5.600,]
 captanNew <- captanNew[captanNew$Concentration != 3.200,]
-captanNew
+#captanNew
 ```
 
 ```{r}
@@ -127,7 +127,7 @@ Now we will start my analyzing Malathion.
 ```{r}
 mala <- usdaNew |>
   filter(Pesticide.Name == "Malathion")
-mala
+#mala
 ```
 
 Now that we got all of Malathion isolated, we will look at specific values: the Maximum and the Mean.
@@ -177,7 +177,7 @@ Now we will start my analyzing Dichlorvos.
 ```{r}
 dich <- usdaNew |>
   filter(Pesticide.Name == "Dichlorvos (DDVP)")
-dich
+#dich
 ```
 
 Now that we got all of Dichlorvos isolated, we will look at specific values: the Maximum and the Mean.
