@@ -1,6 +1,8 @@
 ---
-title: "Testing Strawberries"
-output: html_document
+title: "Strawberries"
+output:
+  pdf_document: default
+  html_document: default
 date: "2024-10-11"
 ---
 
@@ -207,8 +209,6 @@ straw_cen$size_bracket <- str_replace(straw_cen$size_bracket, "AREA GROWN: ", ""
 
 We separate the Category column into two new columns: "Category" and "measurement"
 ```{r}
-#| label: separate the Category column into two new columns: "Category" and "measurement"
-
 organic_cen <- organic_cen |> drop_one_value_col()
 organic_cen <- organic_cen %>%
   separate(Category, into = c("Category", "measurement"), sep = " MEASURED ", extra = "merge", fill = "right")
