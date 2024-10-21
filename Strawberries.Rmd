@@ -266,7 +266,7 @@ ggplot(state_counts, aes(x = reorder(State, Count), y = Count)) +
        title = "Count of Organic Strawberry Operations by State")
 ```
 
-```{r, warning = FALSE}
+```{r warning=FALSE}
 #|label: showing every number in numerical order
 
 # Adjust the column names based on your findings

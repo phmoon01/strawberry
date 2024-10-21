@@ -1,0 +1,243 @@
+---
+title: "Chemicals EDA"
+format: pdf
+editor: visual
+---
+
+## Chemicals EDA
+
+In our first assignment, we looked at different chemicals used on strawberries. Whether it was a Fungicide, Insecticide, Herbicide, or Other, we want to know whether or not eating strawberries is actually killing us in the long run.
+
+I have decided to use the USDA Pesticide Data Program sample data to test whether or not we should stop eating strawberries or if it was safe to continue snacking on our favorite fruit. And if it was safe to eat, how much can we eat before it becomes too dangerous. I got this idea from the radiation banana theory, how every banana contains some radiation. However it is so minuscule that you would have to eat 10 million bananas to die from radiation poisoning which is obviously not an issue as there are numerous more ways I can think of that you will die from trying to eat 10 million bananas.
+
+```{r}
+#Loading libraries
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(tidyverse)
+library(stringr)
+
+#Reading in the data set
+usdaSample <- read.csv("usda_chem_sample_data.csv")
+```
+
+Now, we will look at all the different Pesticide names that are within this data set.
+
+```{r}
+unique(usdaSample$Pesticide.Name)
+```
+
+Now that we have the entire list of all the pesticides we have, we will look at the "dangerous" ones. We find this by looking at the USDA-NASS data cleaning-ver7.qmd. At the bottom, we can see the "Six deadly carcinogens from WHO list" section which lists the 6 deadly carcinogens.
+
+[captafol](https://en.wikipedia.org/wiki/Captafol)
+
+[ethylene dibromide](https://en.wikipedia.org/wiki/1,2-Dibromoethane)
+
+[glyphosate](https://en.wikipedia.org/wiki/Glyphosate)
+
+[malathion](https://en.wikipedia.org/wiki/Malathion)
+
+[diazinon](https://en.wikipedia.org/wiki/Diazinon)
+
+[dichlorophenyltrichloroethane](https://en.wikipedia.org/wiki/DDT)
+
+Now, from the USDA Pesticide Data Program sample data 'Pesticide Name' column, we can see that Captan, Malathion, Diazinon, and Dichlorvos are on the list are similar to the list above. Therefore, we will be testing whether or not these specific pesticides are safe to consume in strawberries.
+
+But before we do, let's get rid of the columns that we don't really need.
+
+```{r}
+usdaNew <- usdaSample %>% select(-Sample.ID, -Commodity, -Pesticide.Code, -LOD, -pp_, -Annotate, -Quantitate, -Mean, -Commodity.Type, -Variety, -Commodity.Claim, -Facility.Type, -Origin, -Country, -State, -Quantity)
+
+```
+
+Now, we are only left with the Pesticide Name, Concentration, and EPA Tolerance (ppm). The only information we really need.
+
+## Captan
+
+Now we will start my analyzing Captan.
+
+```{r}
+captan <- usdaNew |>
+  filter(Pesticide.Name == "Captan")
+captan
+```
+
+Now that we got all of Captan isolated, we will look at specific values: the Maximum and the Mean.
+
+```{r}
+a <- max(captan$Concentration, na.rm = TRUE)
+b <- mean(captan$Concentration, na.rm = TRUE)
+
+cat("The maximum value of Captan concentration in strawberries is:", a)
+cat("\nThe average value of Captan concentration in strawberries is:", b)
+```
+
+There seemed to be 2 outliers (5.6 and 3.2) that were over 5 times greater than any other value, so I found the outliers and also tried doing this again after taking out the outliers to see our results.
+
+```{r, include = FALSE}
+rowFinder1 <- captan[captan$Concentration == 5.600,]
+rowFinder1
+rowFinder2 <- captan[captan$Concentration == 3.200,]
+rowFinder2
+
+captanNew <- captan[captan$Concentration != 5.600,]
+captanNew <- captanNew[captanNew$Concentration != 3.200,]
+captanNew
+```
+
+```{r}
+a <- max(captanNew$Concentration, na.rm = TRUE)
+b <- mean(captanNew$Concentration, na.rm = TRUE)
+
+cat("The maximum value of Captan concentration in strawberries is:", a)
+cat("\nThe average value of Captan concentration in strawberries is:", b)
+```
+
+Now from looking up online, the EPA's Reference Dose (RfD) for Captan is 0.13 milligrams per kilogram body weight per day. Therefore, we have:
+
+Safe Consumption = RfD \* Body Weight
+
+Safe Consumption = 0.13mg \* 62kg (Global Average)
+
+Safe Consumption = 8.06mg per day
+
+Now, if we divide this number by the average concentration, we will be able to find the number of kg of strawberries we are able to consume before the dosage becomes lethal.
+
+kg of Edible Strawberries = Safe Consumption / Average Concentration
+
+kg of Edible Strawberries = 8.06mg / 0.153mg
+
+kg of Edible Strawberries = 52.6 kg
+
+Now, if we look up the number of strawberries in a kilogram of strawberries, we get: around 50 (We will leave it at 50 for this example)
+
+Number of Strawberries = kg of Edible Strawberries \* 50
+
+Number of Strawberries = 2634 Strawberries
+
+Conclusion:
+
+As long as you don't consume 2634 strawberries a day, you will not have enough Captan dosage to make it lethal.
+
+## Malathion
+
+Now we will start my analyzing Malathion.
+
+```{r}
+mala <- usdaNew |>
+  filter(Pesticide.Name == "Malathion")
+mala
+```
+
+Now that we got all of Malathion isolated, we will look at specific values: the Maximum and the Mean.
+
+```{r}
+a <- max(mala$Concentration, na.rm = TRUE)
+b <- mean(mala$Concentration, na.rm = TRUE)
+
+cat("The maximum value of Malathion concentration in strawberries is:", a)
+cat("\nThe average value of Malathion concentration in strawberries is:", b)
+```
+
+Now from looking up online, the EPA's Reference Dose (RfD) for Malathion is 0.2 milligrams per liter of drinking water per day. Therefore, we have:
+
+Safe Consumption = RfD \* Liquid Consumption
+
+Safe Consumption = 0.13mg \* 3.7L (Global Average)
+
+Safe Consumption = 0.74mg per day
+
+Now, if we divide this number by the average concentration, we will be able to find the number of kg of strawberries we are able to consume before the dosage becomes lethal.
+
+kg of Edible Strawberries = Safe Consumption / Average Concentration
+
+kg of Edible Strawberries = 0.74mg / 0.0126mg
+
+kg of Edible Strawberries = 58.73kg
+
+Now, if we look up the number of strawberries in a kilogram of strawberries, we get: around 50 (We will leave it at 50 for this example)
+
+Number of Strawberries = kg of Edible Strawberries \* 50
+
+Number of Strawberries = 2937 Strawberries
+
+Conclusion:
+
+As long as you don't consume 2937 strawberries a day, you will not have enough Malathion dosage to make it lethal.
+
+## Diazinon
+
+There is actually only one case of Diazinon in this data set; therefore, since there is not enough data, I will NOT be testing this pesticide.
+
+## Dichlorvos
+
+Now we will start my analyzing Dichlorvos.
+
+```{r}
+dich <- usdaNew |>
+  filter(Pesticide.Name == "Dichlorvos (DDVP)")
+dich
+```
+
+Now that we got all of Dichlorvos isolated, we will look at specific values: the Maximum and the Mean.
+
+```{r}
+a <- max(dich$Concentration, na.rm = TRUE)
+b <- mean(dich$Concentration, na.rm = TRUE)
+
+cat("The maximum value of Dichlorvos concentration in strawberries is:", a)
+cat("\nThe average value of Dichlorvos concentration in strawberries is:", b)
+```
+
+Now from looking up online, the EPA's Reference Dose (RfD) for Dichlorvos is 0.0005 milligrams per kilogram body weight per day. Therefore, we have:
+
+Safe Consumption = RfD \* Liquid Consumption
+
+Safe Consumption = 0.0005mg \* 62kg (Global Average)
+
+Safe Consumption = 0.031mg per day
+
+Now, if we divide this number by the average concentration, we will be able to find the number of kg of strawberries we are able to consume before the dosage becomes lethal.
+
+kg of Edible Strawberries = Safe Consumption / Average Concentration
+
+kg of Edible Strawberries = 0.031mg / 0.0504mg
+
+kg of Edible Strawberries = 0.615kg
+
+Now, if we look up the number of strawberries in a kilogram of strawberries, we get: around 50 (We will leave it at 50 for this example)
+
+Number of Strawberries = kg of Edible Strawberries \* 50
+
+Number of Strawberries = 31 Strawberries
+
+Conclusion:
+
+As long as you don't consume 31 strawberries a day, you will not have enough Dichlorvos dosage to make it lethal.
+
+However, in this case let's look at the maximum amount of Dichlorvos concentration in a strawberry: 0.11mg. If we were to use this in our calculations, then we would get:
+
+Safe Consumption = RfD \* Liquid Consumption
+
+Safe Consumption = 0.0005mg \* 62kg (Global Average)
+
+Safe Consumption = 0.031mg per day
+
+kg of Edible Strawberries = Safe Consumption / Average Concentration
+
+kg of Edible Strawberries = 0.031mg / 0.11mg
+
+kg of Edible Strawberries = 0.28kg
+
+Number of Strawberries = kg of Edible Strawberries \* 50
+
+Number of Strawberries = 14 Strawberries
+
+Conclusion: If you were to consume even just 14 strawberries of this specific instance of Dichlorvos usage, then it will be enough dosage to be lethal!
+
+## Conclusion
+
+It seems that most of the different pesticides that I looked into were safe to consume since you would have to consume almost your body weight of strawberries every single day in order for the dosage to be lethal. The highest food weight intake recorded to date has been only 10.6kg. Therefore there is nothing to worry about.
+
+However, when it Dichlorvos, there needs to be heavy caution due to even only 14 strawberries being consumed can be lethal. I have personally ate 14 strawberries before in one sitting without a problem and I know many of the reader are able to as well. Therefore, this pesticide should be better regulated and monitored for people who will be consuming these strawberries in the future.
