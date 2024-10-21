@@ -17,7 +17,9 @@ library(knitr)
 library(kableExtra)
 library(tidyverse)
 library(stringr)
+```
 
+```{r}
 #Reading in the data set
 usdaSample <- read.csv("usda_chem_sample_data.csv")
 ```
